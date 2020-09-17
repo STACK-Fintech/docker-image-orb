@@ -1,0 +1,33 @@
+description: |
+  Demonstrate installing a helm chart on a Kubernetes cluster.
+
+usage:
+  version: 2.1
+
+  jobs:
+    build-image: stack-fintech/docker-image@0.1
+
+  workflows:
+    test:
+      jobs:
+        - build-image:
+            name: "alpine"
+            context: image-builder
+            image-name: node
+            image-tag: "latest"
+            distro-tag: alpine
+            push: false
+            filters:
+              branches:
+                ignore:
+                  - master
+        - build-image:
+            name: "buster"
+            context: image-builder
+            image-name: node
+            distro-tag: buster
+            push: false
+            filters:
+              branches:
+                ignore:
+                  - master
