@@ -1,0 +1,26 @@
+parameters:
+  image-tag:
+    description: |
+      The version of the image to use as our base.
+    type: string
+  distro-tag:
+    description: |
+      The base Dockerfile to use (changes what scripts we run to build)
+    type: string
+  image-name:
+    description: |
+      The name of the base image to use.
+    type: string
+    default: python
+  push:
+    description: |
+      Whether or not to try pushing the image to Docker Hub.
+    type: boolean
+    default: true
+machine: true
+steps:
+  - build-image:
+      image-name: << parameters.image-name >>
+      image-tag: << parameters.image-tag >>
+      distro-tag: << parameters.distro-tag >>
+      push: << parameters.push >>
