@@ -1,0 +1,33 @@
+parameters:
+  image-tag:
+    description: |
+      The version of the image to use as our base.
+    type: string
+  distro-tag:
+    description: |
+      The base Dockerfile to use (changes what scripts we run to build)
+    type: string
+  image-name:
+    description: |
+      The name of the base image to use.
+    type: string
+    default: python
+  unacceptable-severity-levels:
+    description: |
+      The level(s) at which ANY detected vulnerabilities will cause this operation to fail.
+    type: string
+    default: CRITICAL
+  acceptable-severity-levels:
+    description: |
+      The level(s) at which detected vulnerabilities will be reported, but NOT cause the build to
+      fail.
+    type: string
+    default: MEDIUM,HIGH
+machine: true
+steps:
+  - scan-image:
+      image-name: << parameters.image-name >>
+      image-tag: << parameters.image-tag >>
+      distro-tag: << parameters.distro-tag >>
+      acceptable-severity-levels: << parameters.acceptable-severity-levels >>
+      unacceptable-severity-levels: << parameters.unacceptable-severity-levels >>

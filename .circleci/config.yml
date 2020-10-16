@@ -68,8 +68,10 @@ jobs:
 workflows:
   lint_pack-validate_publish-dev:
     jobs:
-      - orb-tools/lint
+      - orb-tools/lint:
+          context: image-builder
       - orb-tools/pack:
+          context: image-builder
           requires:
             - orb-tools/lint
       - queue/block_workflow:

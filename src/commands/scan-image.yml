@@ -1,0 +1,61 @@
+description: |
+  This builder function assumes that the base image target will use the common tag format
+  of "{version}-{distro-tag}".
+parameters:
+  image-tag:
+    description: |
+      The version of the image to use as our base.
+    type: string
+  distro-tag:
+    description: |
+      The base Dockerfile to use (changes what scripts we run to build)
+    type: string
+  image-name:
+    description: |
+      The name of the base image to use.
+    type: string
+    default: python
+  unacceptable-severity-levels:
+    description: |
+      The level(s) at which ANY detected vulnerabilities will cause this operation to fail.
+    type: string
+    default: CRITICAL
+  acceptable-severity-levels:
+    description: |
+      The level(s) at which detected vulnerabilities will be reported, but NOT cause the build to
+      fail.
+    type: string
+    default: MEDIUM,HIGH
+
+steps:
+  - checkout
+  - run:
+      name: Define image tag
+      command: |
+        IMAGE_TAG="<< parameters.image-tag >>"
+        DISTRO_TAG="<< parameters.distro-tag >>"
+        echo "Exporting tag \"$IMAGE_TAG\""
+        echo 'export IMAGE_TAG='$IMAGE_TAG >> $BASH_ENV
+        echo 'export DISTRO_TAG='$DISTRO_TAG >> $BASH_ENV
+  - run:
+      name: Build image
+      command: |
+        source $BASH_ENV
+        echo "Using tag \"${IMAGE_TAG}\""
+        echo "Distro Tag: ${DISTRO_TAG}"
+        docker build --build-arg IMAGE_TAG=${IMAGE_TAG} -t stackfintech/<< parameters.image-name >>:${IMAGE_TAG} -f ${DISTRO_TAG}/Dockerfile .
+  - run:
+      name: Scan image
+      command: |
+        source $BASH_ENV
+        echo ""
+        echo "Using tag \"${IMAGE_TAG}\""
+        echo "Distro Tag: ${DISTRO_TAG}"
+        export TRIVY_VERSION=$(curl --silent "https://api.github.com/repos/aquasecurity/trivy/releases/latest" | grep '"tag_name":' | sed -E 's/.*"v([^"]+)".*/\1/')
+        echo "Fetching Trivy v${TRIVY_VERSION}"
+        curl -OL https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz
+        echo "Extracting Trivy v${TRIVY_VERSION}"
+        tar zxvf trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz
+
+        ./trivy --exit-code 0 --severity << parameters.acceptable-severity-levels >> --no-progress stackfintech/<< parameters.image-name >>:${IMAGE_TAG}
+        ./trivy --exit-code 1 --severity << parameters.unacceptable-severity-levels >> --no-progress stackfintech/<< parameters.image-name >>:${IMAGE_TAG}

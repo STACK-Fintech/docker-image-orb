@@ -1,0 +1,30 @@
+description: |
+  Demonstrate installing a helm chart on a Kubernetes cluster.
+
+usage:
+  version: 2.1
+
+  jobs:
+    scan-image: stack-fintech/docker-image@0.1
+
+  workflows:
+    test:
+      jobs:
+        - scan-image:
+            name: "alpine"
+            context: image-builder
+            image-name: node
+            image-tag: "latest"
+            distro-tag: alpine
+            acceptable-severity-levels: LOW,MEDIUM,HIGH
+
+        - scan-image:
+            name: "buster"
+            context: image-builder
+            image-name: node
+            distro-tag: buster
+            # Avoid overlapping the severity levels; the unacceptable-severity-levels setting takes
+            # priority (your builds will fail on whatever matching vulnerability levels are
+            # specified there!)
+            acceptable-severity-levels: LOW,MEDIUM
+            unacceptable-severity-levels: HIGH,CRITICAL
